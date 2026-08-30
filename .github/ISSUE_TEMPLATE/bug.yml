@@ -1,0 +1,62 @@
+name: Bug
+description: Spec과 다르게 동작하는 문제를 등록한다
+title: "fix: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 🐛 문제
+      description: 발생한 문제 설명
+    validations:
+      required: true
+
+  - type: input
+    id: spec
+    attributes:
+      label: 📄 관련 Spec
+      placeholder: "docs/specs/feed.md"
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대 동작
+      description: Spec상 정상 동작
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 실제 동작
+      description: 현재 발생하는 문제
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 재현 방법
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: 완료 조건
+      value: |
+        - [ ] 문제 수정
+        - [ ] 기존 기능 영향 확인
+        - [ ] 가능하면 Regression Test 추가
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        기존 Spec이 올바르고 구현이 잘못된 경우 Spec을 수정하지 않는다.

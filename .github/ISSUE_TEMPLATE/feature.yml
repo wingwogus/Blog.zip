@@ -1,0 +1,46 @@
+name: Feature
+description: 기능 단위 작업을 등록한다
+title: "feat: "
+labels:
+  - feature
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: ✨ 기능 설명
+      description: 어떤 문제를 해결하고 어떤 기능을 제공하는지 작성한다
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 📐 범위
+      value: |
+        - [ ] 작업 내용 1
+        - [ ] 작업 내용 2
+        - [ ] 작업 내용 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: ✅ 완료 조건
+      value: |
+        - [ ] 기능 동작 확인
+        - [ ] 테스트 완료
+        - [ ] 필요한 문서 반영
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: 🔗 참고
+      description: 화면, 기획, 레퍼런스, 관련 Spec 경로
+      value: |
+        - 화면
+        - 기획
+        - 레퍼런스
+        - Spec: `docs/specs/...`

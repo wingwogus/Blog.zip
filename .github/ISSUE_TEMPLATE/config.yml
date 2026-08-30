@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 제품 요구사항 (PRD)
+    url: https://github.com/blog-zip/blog.zip/blob/dev/docs/PRD.md
+    about: 제품 범위와 원칙은 PRD를 먼저 확인한다
+  - name: 개발 협업 가이드
+    url: https://github.com/blog-zip/blog.zip/blob/dev/docs/GROUND_RULES.md
+    about: 브랜치, Issue, 커밋, PR 규칙

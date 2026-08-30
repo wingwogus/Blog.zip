@@ -1,0 +1,42 @@
+name: Task
+description: Feature Issue에서 분리한 실제 구현 단위를 등록한다
+title: "feat: "
+labels:
+  - task
+body:
+  - type: input
+    id: parent
+    attributes:
+      label: 🔗 Parent Issue
+      placeholder: "#10"
+    validations:
+      required: true
+
+  - type: input
+    id: spec
+    attributes:
+      label: 📄 관련 Spec
+      placeholder: "docs/specs/blog-subscription.md"
+    validations:
+      required: true
+
+  - type: textarea
+    id: work
+    attributes:
+      label: 🛠 작업 내용
+      description: 해당 Issue에서 구현할 범위
+      value: |
+        - [ ] 작업 1
+        - [ ] 작업 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: ✅ Done
+      value: |
+        - [ ] 구현 완료
+        - [ ] 테스트 완료
+    validations:
+      required: true
