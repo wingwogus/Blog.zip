@@ -1,0 +1,22 @@
+node_modules/
+dist/
+dist-ssr/
+
+### Vite / TS ###
+*.tsbuildinfo
+.vite/
+
+### Test ###
+coverage/
+
+### IDE ###
+.idea/
+.vscode/
+
+### OS ###
+.DS_Store
+
+### Local env ###
+.env
+.env.local
+*.local

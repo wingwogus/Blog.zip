@@ -1,0 +1,19 @@
+@import 'tailwindcss';
+
+/* 시스템 기본 폰트를 쓴다. 인스타그램 폰트는 Meta 상표라 사용하지 않는다. frontend/DESIGN.md */
+@theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard',
+    'Malgun Gothic', system-ui, sans-serif;
+}
+
+html {
+  /* 원문에서 돌아왔을 때 브라우저의 스크롤 복원을 방해하지 않는다. */
+  scroll-behavior: auto;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
