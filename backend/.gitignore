@@ -1,0 +1,19 @@
+build/
+!gradle/wrapper/gradle-wrapper.jar
+.gradle/
+bin/
+
+### IDE ###
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+### OS ###
+.DS_Store
+
+### Local env ###
+.env
+.env.local
+application-local-override.yml

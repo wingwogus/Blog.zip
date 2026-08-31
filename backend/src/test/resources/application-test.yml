@@ -1,0 +1,24 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  # datasource는 PostgresInitializer가 Testcontainers 값으로 주입한다.
+  jpa:
+    show-sql: false
+
+  flyway:
+    enabled: true
+    clean-disabled: false
+
+app:
+  cors:
+    allowed-origins: http://localhost:3000
+  auth:
+    jwt-secret: test-only-secret-not-used-in-any-real-environment-0123456789
+    refresh-cookie-secure: false
+
+logging:
+  level:
+    root: WARN
+    com.blogzip: INFO

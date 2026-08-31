@@ -1,0 +1,28 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    show-sql: false
+
+springdoc:
+  # 운영에서는 API 문서를 노출하지 않는다. docs/decisions/010-api-response-contract.md
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+app:
+  auth:
+    refresh-cookie-secure: true
+
+logging:
+  level:
+    root: INFO
+    com.blogzip: INFO

@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: blogzip
+  profiles:
+    active: local
+  jackson:
+    default-property-inclusion: non_null
+  jpa:
+    hibernate:
+      # 스키마의 Source of Truth는 Flyway 마이그레이션이다.
+      # 모든 환경에서 validate다. docs/decisions/008-schema-migration.md
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+  messages:
+    basename: messages
+    encoding: UTF-8
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  cors:
+    # credentials가 필요하므로 와일드카드를 쓸 수 없다. docs/decisions/002-auth-strategy.md
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  auth:
+    # 값의 근거는 docs/decisions/002-auth-strategy.md
+    # 기본값을 두지 않는다. 없으면 기동이 실패해야 한다.
+    jwt-secret: ${JWT_SECRET}
+    access-token-ttl: 30m
+    refresh-token-ttl: 14d
+    refresh-cookie-secure: true
+    login-max-attempts: 5
+    login-block-duration: 10m
+  ephemeral:
+    lookup-token-ttl: 10m
+    rate-limit-window: 10m
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [traceId=%X{traceId}] [eventId=%X{eventId}] [userId=%X{userId}] [ip=%X{clientIp}] %-5level %logger{36} - %msg%n"
