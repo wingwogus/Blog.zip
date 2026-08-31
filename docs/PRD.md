@@ -627,24 +627,41 @@ Discovery 기능은 People First라는 핵심 제품 방향을 훼손하지 않�
 
 # 17. Open Questions
 
+## 미해결 항목
+
 현재 다음 항목은 추가 검증 또는 의사결정이 필요하다.
 
-- MVP에서 지원할 Blog 플랫폼의 정확한 범위
-- RSS가 없는 Blog 지원 여부
-- 새 Post 수집 주기
-- Blog Feed 전체 본문 저장 여부
-- Feed에서 본문을 어느 수준까지 노출할지
-- 썸네일 및 이미지 저장 방식
-- Blog Ownership 인증 방식
-- Naver Blog 등 플랫폼별 Ownership 인증 방법
-- 동일 Blog를 여러 User가 Ownership으로 등록하려 할 경우 처리
-- Blog URL 변경 시 Migration 정책
-- Blog 삭제 또는 접근 불가 상태 처리
-- 친구와 일반 관심 Blog를 제품상 구분할지 여부
 - 실제 친구 관계를 서비스에서 명시적으로 모델링할지 여부
+- 친구와 일반 관심 Blog를 제품상 구분할지 여부
+- Blog URL 변경 시 Migration 정책
+- 소유자가 Blog URL을 변경한 경우 Ownership 유지 방식
+- 다수 Blog Ownership을 허용할 시점
+- 이메일 인증과 회원 탈퇴를 도입할 시점
 - Challenge를 어느 시점에 MVP 이후 기능으로 도입할지
 
+위 항목은 MVP 구현을 막지 않는다. MVP 이후 또는 실사용 관찰 후 판단한다.
+
 각 항목이 확정되면 필요한 경우 관련 Feature Spec 또는 Decision을 생성한다.
+
+## 결정된 항목
+
+아래는 이전에 미해결이었으나 결정이 완료된 항목이다. 상세 근거는 각 문서에 있다.
+
+| 항목 | 결정 | 근거 |
+| --- | --- | --- |
+| MVP에서 지원할 Blog 플랫폼의 정확한 범위 | 플랫폼 화이트리스트를 두지 않는다. RSS 또는 Atom Feed를 찾을 수 있으면 지원한다 | `docs/decisions/003-blog-discovery.md` |
+| RSS가 없는 Blog 지원 여부 | 지원하지 않는다. HTML 파싱이나 크롤링을 하지 않는다 | `docs/decisions/003-blog-discovery.md` |
+| 새 Post 수집 주기 | Blog별 30분 | `docs/decisions/004-post-collection.md` |
+| Blog Feed 전체 본문 저장 여부 | 저장하지 않는다 | `docs/decisions/004-post-collection.md` |
+| Feed에서 본문을 어느 수준까지 노출할지 | 노출하지 않는다. 발췌도 저장하지 않으며 피드는 제목·날짜·썸네일까지다 | `docs/decisions/004-post-collection.md` |
+| 썸네일 및 이미지 저장 방식 | 원본 주소를 참조한다. 재호스팅하지 않는다 | `docs/decisions/004-post-collection.md` |
+| 동일 Blog를 여러 User가 Ownership으로 등록하려 할 경우 처리 | 소유자가 없는 동안 여러 사용자가 확인을 시도할 수 있고, 먼저 성공한 사용자가 Ownership을 얻는다 | `docs/specs/blog-ownership.md` FR-006 |
+| Blog 삭제 또는 접근 불가 상태 처리 | 수집 상태를 `UNAVAILABLE`로 전환하고 기존 Post는 유지한다 | `docs/specs/feed.md` FR-011 |
+
+다음 항목은 아직 결정되지 않았으며 해당 기능 구현 전에 `docs/decisions/005-ownership-verification.md`에서 정한다.
+
+- Blog Ownership 인증 방식
+- Naver Blog 등 플랫폼별 Ownership 인증 방법
 
 ---
 
