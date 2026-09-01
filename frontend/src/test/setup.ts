@@ -3,10 +3,12 @@ import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { resetRefreshState } from '@/api/client';
 import { clearAccessToken } from '@/api/accessToken';
+import { resetSessionRestore } from '@/features/auth/authApi';
 
 beforeEach(() => {
   // 모듈 스코프 상태가 테스트 간에 새지 않게 한다.
   resetRefreshState();
+  resetSessionRestore();
   clearAccessToken();
 });
 
