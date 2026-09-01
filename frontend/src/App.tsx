@@ -1,7 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { ApiError } from '@/api/ApiError';
 import { ErrorCode } from '@/api/errorCodes';
+import { GuestOnly, RequireAuth } from '@/features/auth/AuthGates';
+import { AuthSession } from '@/features/auth/AuthSession';
+import { LoginPage } from '@/features/auth/LoginPage';
+import { SignupPage } from '@/features/auth/SignupPage';
+import { SubscriptionEntryPage } from '@/features/auth/SubscriptionEntryPage';
 import { FeedPage } from '@/features/feed/FeedPage';
 
 const queryClient = new QueryClient({
@@ -31,20 +36,37 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="min-h-dvh bg-slate-50">
-          <header className="border-b border-slate-200 bg-white">
-            <div className="mx-auto max-w-xl px-4 py-3">
-              <span className="text-[17px] font-semibold text-slate-900">Blog.zip</span>
-            </div>
-          </header>
-          <main>
-            <Routes>
-              <Route path="/" element={<FeedPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-        </div>
+        <AuthSession>
+          <Routes>
+            <Route element={<GuestOnly />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+            </Route>
+            <Route element={<RequireAuth />}>
+              <Route element={<AppShell />}>
+                <Route path="/" element={<FeedPage />} />
+                <Route path="/subscriptions/new" element={<SubscriptionEntryPage />} />
+              </Route>
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AuthSession>
       </BrowserRouter>
     </QueryClientProvider>
+  );
+}
+
+function AppShell() {
+  return (
+    <div className="min-h-dvh bg-slate-50">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-xl px-4 py-3">
+          <span className="text-[17px] font-semibold text-slate-900">Blog.zip</span>
+        </div>
+      </header>
+      <main>
+        <Outlet />
+      </main>
+    </div>
   );
 }
