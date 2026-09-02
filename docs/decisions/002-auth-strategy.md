@@ -75,6 +75,8 @@ POST /api/v1/auth/token/refresh  (쿠키의 refreshToken 사용)
 
 - 이미 무효화된 refreshToken이 다시 사용되면 **해당 사용자의 모든 refreshToken을 무효화한다.** 탈취 가능성이 있는 상황이다.
 - 이 경우도 응답은 `401 AUTH_005`다. 재사용 감지를 별도 코드로 알리지 않는다. 공격자에게 정보를 주지 않는다.
+- refreshToken 소비와 재발급은 사용자 단위로 직렬화하고, 기존 token 무효화는 `revokedAt IS NULL` 조건을 포함한 단일 DB 갱신으로 처리한다. 동시에 같은 token을 사용하면 하나만 재발급에 성공해야 한다.
+- 재사용 탐지와 로그인으로 인한 새 refreshToken 발급도 같은 사용자 단위 직렬화 범위에 둔다. 재사용을 탐지한 요청이 완료된 뒤에는 해당 사용자의 기존 또는 경쟁 요청으로 발급된 refreshToken이 남아 있으면 안 된다.
 
 ### 로그인 시도 제한
 

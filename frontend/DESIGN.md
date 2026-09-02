@@ -1,13 +1,13 @@
-# Blog.zip Feed 디자인 참고
+# Blog.zip 디자인 참고
 
 ## 0. 문서 정보
 
 - Status: Draft
-- Last Updated: 2026-08-30
-- 대상: Feed 화면 (카드 스크롤)
-- 관련 문서: `docs/PRD.md` 7장, `docs/specs/feed.md`, `frontend/AGENTS.md`
+- Last Updated: 2026-09-01
+- 대상: Feed 화면 (카드 스크롤), Auth 화면 (가입 / 로그인)
+- 관련 문서: `docs/PRD.md` 7장, `docs/specs/feed.md`, `docs/specs/auth.md`, `frontend/AGENTS.md`
 
-이 문서는 **디자인 참고 자료**다. 기능 동작과 완료 조건은 `docs/specs/feed.md`가 Source of Truth다.
+이 문서는 **디자인 참고 자료**다. 기능 동작과 완료 조건은 각 `docs/specs/*.md`가 Source of Truth다.
 둘이 충돌하면 Spec을 먼저 확인한다.
 
 ---
@@ -282,7 +282,102 @@ favicon으로 가려면 `feed.md`와 `blog-subscription.md`의 데이터 항목 
 
 ---
 
-## 7. 참고 자료
+## 7. 디자인 토큰
+
+Feed와 Auth가 같은 화면 언어를 쓰게 하는 값이다. 새 화면은 이 토큰에서 고르거나, 없는 값만 여기에 추가한 뒤 쓴다.
+
+### 색
+
+| 토큰 | 값 | 쓸 곳 |
+| --- | --- | --- |
+| canvas | `slate-50` | 화면 바탕 |
+| surface | `white` | 카드, 입력, 헤더 |
+| ink | `slate-900` | 제목, 이름, 주 버튼 |
+| muted | `slate-500` | 시각, 플랫폼, 보조 문장 |
+| faint | `slate-400` | placeholder |
+| line | `slate-200` | 테두리, 스켈레톤 |
+| accent | `sky-500` | 포커스. 새 글 테두리는 `sky-300` |
+| danger | `rose-600` | 오류 문구. 필드 테두리는 `rose-300` |
+
+인스타그램 그라디언트, 보라 그라디언트 온 하양을 쓰지 않는다. Meta 상표이며 이 제품의 톤과도 다르다.
+
+### 타입
+
+본문은 시스템 고딕(`--font-sans`). 표시용 영문 산세리프를 쓰지 않는다.
+
+가입/로그인 헤드라인에만 `--font-display`(명조 계열)를 쓴다. 글을 모아 두는 제품이라 그 순간에만 쓴다.
+
+| 토큰 | 크기 | 가중치 | 쓸 곳 |
+| --- | --- | --- | --- |
+| display | 28 / 행간 1.3 | regular, display 폰트 | Auth 헤드라인 |
+| title | 17 / 행간 1.4 | semibold | 카드 제목, 화면 제목 |
+| body | 15 | regular | 본문, 입력, 주 버튼 |
+| name | 15 | semibold | 친구 이름, 레이블 |
+| meta | 13 | regular | 시각, 플랫폼, 보조, 오류 |
+| mark | 120 | regular, display 폰트 | Auth `.zip` 워터마크 |
+
+### 간격·모서리·터치
+
+4의 배수. 값 자체보다 일관성이 중요하다.
+
+| 토큰 | 값 |
+| --- | --- |
+| 카드 간격 | 12 |
+| 내부 여백 | 16 |
+| 필드 간격 | 16 |
+| 레이블–필드 | 8 |
+| 모서리 카드 | 12 (`rounded-xl`) |
+| 모서리 제어 | 8 (`rounded-lg`) |
+| 최소 탭 영역 | 44 (`min-h-11`) |
+| 콘텐츠 폭 | `max-w-xl` |
+
+### 동작
+
+| 토큰 | 값 |
+| --- | --- |
+| rise | 400ms, 8px 위에서 떠오름 |
+| stagger | 80ms |
+
+Auth 필드는 한 번에 떨어지지 않고 80ms씩 드러난다. Feed 카드 스크롤을 방해하지 않도록 피드 화면에는 쓰지 않는다.
+
+---
+
+## 8. Auth 화면
+
+가입과 로그인은 **피드로 들어가기 전 편집 화면**이다. 중앙에 떠 있는 카드가 아니다. Feed와 같은 `max-w-xl` 왼쪽 정렬 글줄이라, 가입 직후 홈이 같은 자리에 나온다.
+
+```text
+┌────────────────────────────────┐
+│  Blog.zip                      │  메타
+│                                │
+│  친구의 글을                   │  display
+│  한곳에 모아 두세요.           │
+│                                │
+│  이메일                        │
+│  ┌──────────────────────────┐  │
+│  └──────────────────────────┘  │
+│  비밀번호                      │
+│  ┌──────────────────────────┐  │
+│  └──────────────────────────┘  │
+│  [ 로그인 ]                    │
+│                                │
+│  계정이 없다면  가입           │
+│                           .zip │  워터마크
+└────────────────────────────────┘
+```
+
+지킬 것:
+
+- 피드 헤더를 그대로 두지 않는다. 아직 앱 안에 있지 않다.
+- 중앙 정렬 로그인 카드를 쓰지 않는다. Feed와 같은 왼쪽 흘림이 연속성이다.
+- 입력은 surface + line + 제어 모서리. 카드와 같은 언어다.
+- 주 버튼은 ink 바탕, 흰 글. Feed 빈 상태 CTA와 같다.
+- 오류는 `error.code`로만 분기하고, 보이는 문구는 서버 `message`를 그대로 쓴다. (`docs/decisions/010-api-response-contract.md`)
+- 가입 성공 직후 홈(피드)으로 간다. 추가 온보딩을 거치지 않는다. (PRD P-005, `auth.md` FR-001)
+
+---
+
+## 9. 참고 자료
 
 - [Instagram brand - Layout](https://about.instagram.com/brand/layout) - "Simple. Flexible. Content-first.", full-bleed 원칙
 - [Meta Design - The new Instagram brand identity](https://www.meta.com/design-at-meta/blog/the-new-instagram-brand-identity/) - 2026 리프레시 방향

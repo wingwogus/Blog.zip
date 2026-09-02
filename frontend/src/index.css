@@ -5,6 +5,40 @@
   --font-sans:
     -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard',
     'Malgun Gothic', system-ui, sans-serif;
+  --font-display:
+    'Iowan Old Style', 'Palatino Linotype', palatino, 'Apple Myungjo',
+    'Nanum Myeongjo', 'Noto Serif KR', serif;
+}
+
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-rise {
+  animation: auth-rise 400ms ease-out both;
+}
+
+.auth-rise-delay-1 {
+  animation-delay: 80ms;
+}
+.auth-rise-delay-2 {
+  animation-delay: 160ms;
+}
+.auth-rise-delay-3 {
+  animation-delay: 240ms;
+}
+.auth-rise-delay-4 {
+  animation-delay: 320ms;
+}
+.auth-rise-delay-5 {
+  animation-delay: 400ms;
 }
 
 html {
