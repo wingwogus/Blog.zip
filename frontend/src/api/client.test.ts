@@ -90,6 +90,21 @@ describe('api client', () => {
   });
 
   describe('자동 재발급', () => {
+    it('AUTH_004 로그인 실패에는 재발급이나 재시도를 하지 않는다', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(fail(401, ErrorCode.INVALID_CREDENTIALS));
+      vi.stubGlobal('fetch', fetchMock);
+
+      const error = await api
+        .post('/auth/login', { email: 'user@example.com', password: 'wrong-password' })
+        .catch((cause: unknown) => cause);
+
+      expect(error).toBeInstanceOf(ApiError);
+      expect((error as ApiError).code).toBe(ErrorCode.INVALID_CREDENTIALS);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
     it('401이면 재발급 후 원래 요청을 재시도한다', async () => {
       const fetchMock = vi
         .fn()

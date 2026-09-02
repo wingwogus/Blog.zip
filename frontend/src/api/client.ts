@@ -115,20 +115,26 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   // 재발급 엔드포인트 자체의 401에는 재시도하지 않는다. 무한 루프가 된다.
   const isRefreshCall = buildUrl(path) === REFRESH_PATH;
+  const envelope = response.status === 401 ? await parseEnvelope<T>(response) : null;
 
-  if (response.status === 401 && retryOnUnauthorized && !isRefreshCall) {
+  if (
+    response.status === 401 &&
+    envelope?.error?.code === ErrorCode.UNAUTHORIZED &&
+    retryOnUnauthorized &&
+    !isRefreshCall
+  ) {
     await refreshAccessToken();
     // 재시도는 1회만. 다시 401이면 아래에서 ApiError로 던진다.
     return request<T>(path, { ...options, retryOnUnauthorized: false });
   }
 
-  const envelope = await parseEnvelope<T>(response);
+  const parsedEnvelope = envelope ?? (await parseEnvelope<T>(response));
 
   if (!response.ok) {
     if (response.status === 401 && !isRefreshCall) clearAccessToken();
     throw new ApiError(
       response.status,
-      envelope?.error ?? {
+      parsedEnvelope?.error ?? {
         code: ErrorCode.INTERNAL_ERROR,
         messageKey: 'error.internal_error',
         message: '문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
@@ -137,7 +143,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   // 204는 본문이 없다.
-  return (envelope?.data ?? undefined) as T;
+  return (parsedEnvelope?.data ?? undefined) as T;
 }
 
 export const api = {

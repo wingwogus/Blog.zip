@@ -49,6 +49,10 @@ export function AuthSession({ children }: { children: ReactNode }) {
         if (cancelled || generation !== generationRef.current) return;
         setStatus(ok ? 'authenticated' : 'anonymous');
       })
+      .catch(() => {
+        if (cancelled || generation !== generationRef.current) return;
+        setStatus('anonymous');
+      })
       .finally(() => {
         if (!cancelled) bootingRef.current = false;
       });

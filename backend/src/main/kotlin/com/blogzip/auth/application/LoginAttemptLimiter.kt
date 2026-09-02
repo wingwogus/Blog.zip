@@ -34,16 +34,19 @@ class LoginAttemptLimiter(
 
     fun recordFailure(email: String) {
         val now = Instant.now(clock)
-        val previous = current(email)
         val window = properties.loginBlockDuration
-        val stillCounting = previous != null &&
-            !previous.isBlocked(now) &&
-            now.isBefore(previous.windowStart.plus(window))
-        val count = if (stillCounting) previous.failureCount + 1 else 1
-        val windowStart = if (stillCounting) previous.windowStart else now
-        val blockedUntil =
-            if (count >= properties.loginMaxAttempts) now.plus(window) else null
-        cache.put(key(email), LoginAttemptState(count, windowStart, blockedUntil))
+        cache.asMap().compute(key(email)) { _, previous ->
+            if (previous is LoginAttemptState && previous.isBlocked(now)) {
+                return@compute previous
+            }
+            val stillCounting = previous is LoginAttemptState &&
+                now.isBefore(previous.windowStart.plus(window))
+            val count = if (stillCounting) previous.failureCount + 1 else 1
+            val windowStart = if (stillCounting) previous.windowStart else now
+            val blockedUntil =
+                if (count >= properties.loginMaxAttempts) now.plus(window) else null
+            LoginAttemptState(count, windowStart, blockedUntil)
+        }
     }
 
     fun clear(email: String) {

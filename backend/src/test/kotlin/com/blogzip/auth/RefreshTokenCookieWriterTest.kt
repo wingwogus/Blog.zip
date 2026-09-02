@@ -45,7 +45,7 @@ class RefreshTokenCookieWriterTest {
         val cookies = response.getHeaders(HttpHeaders.SET_COOKIE)
         assertThat(cookies).hasSize(2)
         assertThat(cookies).allSatisfy { cookie ->
-            assertThat(cookie).contains("refreshToken=")
+            assertThat(cookie).contains("refreshToken=;")
             assertThat(cookie).contains("Max-Age=0")
             assertThat(cookie).contains("HttpOnly")
             assertThat(cookie).contains("SameSite=Strict")
