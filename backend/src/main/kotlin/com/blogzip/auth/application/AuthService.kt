@@ -49,7 +49,7 @@ class AuthService(
     fun login(email: String, password: String): AuthSession {
         val normalized = Email.normalize(email)
         loginAttemptLimiter.assertNotBlocked(normalized)
-        val user = userRepository.findByEmail(normalized)
+        val user = userRepository.findWithLockByEmail(normalized)
         val matches = if (user == null) {
             passwordEncoder.matches(password, dummyPasswordHash)
             false
@@ -68,21 +68,17 @@ class AuthService(
         if (rawRefreshToken.isNullOrBlank()) {
             throw BusinessException(ErrorCode.INVALID_REFRESH_TOKEN)
         }
-        val existing = refreshTokenService.findByRawToken(rawRefreshToken)
-            ?: throw BusinessException(ErrorCode.INVALID_REFRESH_TOKEN)
-        val now = Instant.now(clock)
-        if (existing.isRevoked()) {
-            refreshTokenService.revokeAll(existing.userId)
+        val consumption = refreshTokenService.consume(rawRefreshToken)
+        if (consumption is RefreshTokenConsumption.Reused) {
             throw BusinessException(ErrorCode.INVALID_REFRESH_TOKEN)
         }
-        if (existing.isExpired(now)) {
+        if (consumption !is RefreshTokenConsumption.Consumed) {
             throw BusinessException(ErrorCode.INVALID_REFRESH_TOKEN)
         }
-        val user = userRepository.findById(existing.userId)
+        val user = userRepository.findById(consumption.userId)
             .orElseThrow { BusinessException(ErrorCode.USER_NOT_FOUND) }
         val accessToken = accessJwtProvider.issue(user.getId())
-        val refreshToken = refreshTokenService.rotate(existing)
-        return AuthSession(AuthenticatedUser.from(user), accessToken, refreshToken)
+        return AuthSession(AuthenticatedUser.from(user), accessToken, consumption.replacement)
     }
 
     fun logout(userId: String, rawRefreshToken: String?) {

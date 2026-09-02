@@ -61,8 +61,14 @@ class AuthServiceTest {
         Mockito.`when`(userRepository.findByEmail(Mockito.anyString())).thenAnswer { inv ->
             usersByEmail[inv.getArgument(0)]
         }
+        Mockito.`when`(userRepository.findWithLockByEmail(Mockito.anyString())).thenAnswer { inv ->
+            usersByEmail[inv.getArgument(0)]
+        }
         Mockito.`when`(userRepository.findById(Mockito.anyString())).thenAnswer { inv ->
             Optional.ofNullable(usersById[inv.getArgument(0)])
+        }
+        Mockito.`when`(userRepository.findWithLockById(Mockito.anyString())).thenAnswer { inv ->
+            usersById[inv.getArgument(0)]
         }
         Mockito.`when`(userRepository.saveAndFlush(Mockito.any(User::class.java))).thenAnswer { inv ->
             storeUser(inv.getArgument(0))
@@ -73,6 +79,17 @@ class AuthServiceTest {
 
         Mockito.`when`(refreshTokenRepository.findByTokenHash(Mockito.anyString())).thenAnswer { inv ->
             tokensByHash[inv.getArgument(0)]
+        }
+        Mockito.`when`(
+            refreshTokenRepository.revokeActiveByTokenHash(
+                Mockito.anyString(),
+                Mockito.any(Instant::class.java) ?: Instant.EPOCH,
+            ),
+        ).thenAnswer { inv ->
+            val token = tokensByHash[inv.getArgument<String>(0)] ?: return@thenAnswer 0
+            if (!token.isActive(clock.instant())) return@thenAnswer 0
+            token.revoke(inv.getArgument(1))
+            1
         }
         Mockito.`when`(refreshTokenRepository.findAllByUserId(Mockito.anyString())).thenAnswer { inv ->
             val userId = inv.getArgument<String>(0)
@@ -91,7 +108,7 @@ class AuthServiceTest {
             userRepository,
             passwordEncoder,
             AccessJwtProvider(properties, clock),
-            RefreshTokenService(refreshTokenRepository, properties, clock),
+            RefreshTokenService(refreshTokenRepository, userRepository, properties, clock),
             LoginAttemptLimiter(
                 Caffeine.newBuilder().maximumSize(100).build(),
                 properties,

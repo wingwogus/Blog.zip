@@ -13,6 +13,7 @@ Thumbs.db
 .omo/
 .senpi/
 .claude/
+.gjc/
 
 ### Local env ###
 .env

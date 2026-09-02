@@ -3,6 +3,7 @@ package com.blogzip.auth.application
 import com.blogzip.auth.domain.RefreshToken
 import com.blogzip.auth.infra.RefreshTokenHasher
 import com.blogzip.auth.infra.RefreshTokenRepository
+import com.blogzip.auth.infra.UserRepository
 import com.blogzip.config.AuthProperties
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,37 +22,51 @@ import java.util.HexFormat
 @Service
 class RefreshTokenService(
     private val refreshTokenRepository: RefreshTokenRepository,
+    private val userRepository: UserRepository,
     private val properties: AuthProperties,
     private val clock: Clock,
 ) {
     private val random = SecureRandom()
 
-    fun findByRawToken(rawToken: String): RefreshToken? =
-        refreshTokenRepository.findByTokenHash(RefreshTokenHasher.hash(rawToken))
+    @Transactional
+    fun issue(userId: String): String {
+        userRepository.findWithLockById(userId) ?: error("사용자가 없다")
+        return persistNew(userId, Instant.now(clock))
+    }
 
     @Transactional
-    fun issue(userId: String): String = persistNew(userId, Instant.now(clock))
-
-    @Transactional
-    fun rotate(current: RefreshToken): String {
+    fun consume(rawToken: String): RefreshTokenConsumption {
         val now = Instant.now(clock)
-        current.revoke(now)
-        refreshTokenRepository.save(current)
-        return persistNew(current.userId, now)
+        val tokenHash = RefreshTokenHasher.hash(rawToken)
+        val userId = refreshTokenRepository.findByTokenHash(tokenHash)?.userId
+            ?: return RefreshTokenConsumption.Invalid
+        userRepository.findWithLockById(userId) ?: return RefreshTokenConsumption.Invalid
+        val current = refreshTokenRepository.findByTokenHash(tokenHash)
+            ?: return RefreshTokenConsumption.Invalid
+        if (current.isExpired(now)) {
+            return RefreshTokenConsumption.Invalid
+        }
+        if (refreshTokenRepository.revokeActiveByTokenHash(tokenHash, now) == 0) {
+            revokeAll(userId, now)
+            return RefreshTokenConsumption.Reused(userId)
+        }
+        return RefreshTokenConsumption.Consumed(userId, persistNew(userId, now))
     }
 
     @Transactional
     fun revokeOwned(userId: String, rawToken: String?) {
         if (rawToken.isNullOrBlank()) return
-        val token = findByRawToken(rawToken) ?: return
+        val token = refreshTokenRepository.findByTokenHash(RefreshTokenHasher.hash(rawToken)) ?: return
         if (token.userId != userId) return
         token.revoke(Instant.now(clock))
         refreshTokenRepository.save(token)
     }
 
-    @Transactional
     fun revokeAll(userId: String) {
-        val now = Instant.now(clock)
+        revokeAll(userId, Instant.now(clock))
+    }
+
+    private fun revokeAll(userId: String, now: Instant) {
         val tokens = refreshTokenRepository.findAllByUserId(userId)
         tokens.forEach { it.revoke(now) }
         refreshTokenRepository.saveAll(tokens)
@@ -79,4 +94,12 @@ class RefreshTokenService(
     companion object {
         private const val RAW_TOKEN_BYTES = 32
     }
+}
+
+sealed interface RefreshTokenConsumption {
+    data class Consumed(val userId: String, val replacement: String) : RefreshTokenConsumption
+
+    data class Reused(val userId: String) : RefreshTokenConsumption
+
+    data object Invalid : RefreshTokenConsumption
 }

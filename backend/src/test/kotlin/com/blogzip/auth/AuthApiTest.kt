@@ -20,9 +20,14 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.context.WebApplicationContext
 import jakarta.servlet.http.Cookie
+import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @Transactional
 class AuthApiTest : IntegrationTest() {
@@ -194,6 +199,81 @@ class AuthApiTest : IntegrationTest() {
         mockMvc.perform(post("/api/v1/auth/token/refresh").cookie(second))
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.error.code").value("AUTH_005"))
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    fun `동일 refreshToken의 동시 재발급은 하나만 성공하고 후속 토큰을 모두 무효화한다`() {
+        val original = refreshCookie(signup(uniqueEmail()))
+        val ready = CountDownLatch(2)
+        val start = CountDownLatch(1)
+        val executor = Executors.newFixedThreadPool(2)
+        try {
+            val futures = (1..2).map {
+                executor.submit(Callable {
+                    ready.countDown()
+                    check(start.await(5, TimeUnit.SECONDS))
+                    mockMvc.perform(post("/api/v1/auth/token/refresh").cookie(original)).andReturn()
+                })
+            }
+            check(ready.await(5, TimeUnit.SECONDS))
+            start.countDown()
+
+            val results = futures.map { it.get(10, TimeUnit.SECONDS) }
+            val successes = results.filter { it.response.status == 200 }
+            assertThat(successes).hasSize(1)
+            assertThat(results.filter { it.response.status != 200 }.map(::errorCode))
+                .containsOnly("AUTH_005")
+
+            mockMvc.perform(post("/api/v1/auth/token/refresh").cookie(refreshCookie(successes.single())))
+                .andExpect(status().isUnauthorized)
+                .andExpect(jsonPath("$.error.code").value("AUTH_005"))
+        } finally {
+            executor.shutdownNow()
+        }
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    fun `재사용 탐지와 다른 활성 refreshToken의 동시 사용 뒤에는 활성 토큰이 남지 않는다`() {
+        val email = uniqueEmail()
+        val original = refreshCookie(signup(email))
+        mockMvc.perform(post("/api/v1/auth/token/refresh").cookie(original))
+            .andExpect(status().isOk)
+        val other = refreshCookie(
+            mockMvc.perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"email":"$email","password":"password1234"}"""),
+            ).andExpect(status().isOk).andReturn(),
+        )
+
+        val ready = CountDownLatch(2)
+        val start = CountDownLatch(1)
+        val executor = Executors.newFixedThreadPool(2)
+        try {
+            val futures = listOf(original, other).map { cookie ->
+                executor.submit(Callable {
+                    ready.countDown()
+                    check(start.await(5, TimeUnit.SECONDS))
+                    mockMvc.perform(post("/api/v1/auth/token/refresh").cookie(cookie)).andReturn()
+                })
+            }
+            check(ready.await(5, TimeUnit.SECONDS))
+            start.countDown()
+            val results = futures.map { it.get(10, TimeUnit.SECONDS) }
+
+            results.filter { it.response.status == 200 }.forEach { result ->
+                mockMvc.perform(post("/api/v1/auth/token/refresh").cookie(refreshCookie(result)))
+                    .andExpect(status().isUnauthorized)
+                    .andExpect(jsonPath("$.error.code").value("AUTH_005"))
+            }
+            mockMvc.perform(post("/api/v1/auth/token/refresh").cookie(other))
+                .andExpect(status().isUnauthorized)
+                .andExpect(jsonPath("$.error.code").value("AUTH_005"))
+        } finally {
+            executor.shutdownNow()
+        }
     }
 
     @Test
