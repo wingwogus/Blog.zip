@@ -62,6 +62,34 @@ class SubscriptionDiscoveryTest {
     }
 
     @Test
+    fun alternateFeedLinksCannotExceedTheDiscoveryRequestBudget() {
+        val requests = mutableListOf<URI>()
+        val alternates = (1..100).joinToString("") {
+            "<link rel='alternate' type='application/rss+xml' href='/feed-$it.xml'>"
+        }
+        val transport = BlogHttpTransport { uri, _, _, _, _ ->
+            requests += uri
+            if (uri.path == "/") BlogHttpResponse(200, null, "<html><head>$alternates</head></html>")
+            else BlogHttpResponse(404, null, null)
+        }
+        val service = SubscriptionService(
+            Mockito.mock(BlogRepository::class.java),
+            Mockito.mock(SubscriptionRepository::class.java),
+            Mockito.mock(BlogFetchStateRepository::class.java),
+            Caffeine.newBuilder().build(),
+            Caffeine.newBuilder().build(),
+            BlogHostResolver { listOf(InetAddress.getByName("93.184.216.34")) },
+            transport,
+        )
+
+        val error = assertThrows(BusinessException::class.java) { service.lookup("usr_1", "example.test") }
+
+        assertEquals(ErrorCode.BLOG_NOT_REACHABLE, error.errorCode)
+        assertEquals(10, requests.size)
+        assertTrue(requests.drop(1).all { it.path in setOf("/feed-1.xml", "/feed-2.xml", "/feed-3.xml", "/feed-4.xml", "/feed-5.xml", "/rss", "/feed", "/rss.xml", "/atom.xml", "/index.xml") })
+    }
+
+    @Test
     fun redirectToBlockedTargetIsRejectedBeforeRequest() {
         val blogs = Mockito.mock(BlogRepository::class.java)
         val subs = Mockito.mock(SubscriptionRepository::class.java)

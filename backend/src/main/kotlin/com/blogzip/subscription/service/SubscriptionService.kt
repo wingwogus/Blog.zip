@@ -215,6 +215,7 @@ class SubscriptionService(
 
     private fun discover(site: URI, platform: String): Pair<String, Feed>? {
         val deadline = System.nanoTime() + Duration.ofSeconds(10).toNanos()
+        val requestBudget = RequestBudget(MAX_DISCOVERY_REQUESTS)
         val candidates = mutableListOf<String>()
         when (platform) {
             "NAVER" -> candidates += "https://rss.blog.naver.com/${site.path.trim('/').substringAfterLast('/')}.xml"
@@ -224,13 +225,26 @@ class SubscriptionService(
             "GENERIC" -> candidates += "${site.scheme}://${site.host}/rss"
         }
         var reachable = false
-        val html = try { fetch(site, 0, deadline).also { reachable = it != null } } catch (e: BusinessException) { if (e.errorCode == ErrorCode.BLOG_NOT_REACHABLE) null else throw e }
+        val html = try {
+            fetch(site, 0, deadline, requestBudget).also { reachable = it != null }
+        } catch (e: BusinessException) {
+            if (e.errorCode == ErrorCode.BLOG_NOT_REACHABLE && !requestBudget.isExhausted()) null else throw e
+        }
         if (html != null && !html.isFeed) {
-            Jsoup.parse(html.body, site.toString()).select("link[rel=alternate]").filter { it.attr("type").lowercase() in setOf("application/rss+xml", "application/atom+xml") }.forEach { candidates += site.resolve(it.attr("href")).toString() }
+            Jsoup.parse(html.body, site.toString())
+                .select("link[rel=alternate]")
+                .asSequence()
+                .filter { it.attr("type").lowercase() in FEED_MIME_TYPES }
+                .take(MAX_ALTERNATE_FEED_CANDIDATES)
+                .forEach { candidates += site.resolve(it.attr("href")).toString() }
         }
         candidates += listOf("/rss", "/feed", "/rss.xml", "/atom.xml", "/index.xml").map { site.resolve(it).toString() }
         for (candidate in candidates.distinct()) {
-            val response = try { fetch(URI(candidate), 0, deadline).also { reachable = reachable || it != null } } catch (e: BusinessException) { if (e.errorCode == ErrorCode.BLOG_NOT_REACHABLE) null else throw e } ?: continue
+            val response = try {
+                fetch(URI(candidate), 0, deadline, requestBudget).also { reachable = reachable || it != null }
+            } catch (e: BusinessException) {
+                if (e.errorCode == ErrorCode.BLOG_NOT_REACHABLE && !requestBudget.isExhausted()) null else throw e
+            } ?: continue
             if (response.isFeed) {
                 try { return candidate to parseFeed(response.body) }
                 catch (_: Exception) { continue }
@@ -241,8 +255,20 @@ class SubscriptionService(
     }
 
     private data class Response(val body: String, val isFeed: Boolean)
-    private fun fetch(uri: URI, redirects: Int, deadline: Long): Response? {
+    private class RequestBudget(private val limit: Int) {
+        private var consumed = 0
+
+        fun consume() {
+            if (consumed >= limit) throw BusinessException(ErrorCode.BLOG_NOT_REACHABLE)
+            consumed += 1
+        }
+
+        fun isExhausted(): Boolean = consumed >= limit
+    }
+
+    private fun fetch(uri: URI, redirects: Int, deadline: Long, requestBudget: RequestBudget): Response? {
         if (redirects > 3 || System.nanoTime() >= deadline) throw BusinessException(ErrorCode.BLOG_NOT_REACHABLE)
+        requestBudget.consume()
         if (uri.scheme.lowercase() !in setOf("http", "https")) throw BusinessException(ErrorCode.INVALID_BLOG_URL)
         val host = uri.host ?: throw BusinessException(ErrorCode.INVALID_BLOG_URL)
         val addresses = try { hostResolver.resolve(host) }
@@ -256,7 +282,7 @@ class SubscriptionService(
             catch (_: java.io.IOException) { return null }
         if (response.status in 300..399) {
             val location = response.location ?: throw BusinessException(ErrorCode.BLOG_NOT_REACHABLE)
-            return fetch(uri.resolve(location), redirects + 1, deadline)
+            return fetch(uri.resolve(location), redirects + 1, deadline, requestBudget)
         }
         if (response.tooLarge) throw BusinessException(ErrorCode.BLOG_NOT_SUPPORTED)
         if (response.status !in 200..299 || response.body == null) return null
@@ -269,5 +295,11 @@ class SubscriptionService(
         val feed = input.build(XmlReader(body.byteInputStream()))
         val posts = feed.entries.orEmpty().take(3).map { PostPreview(it.title.orEmpty(), it.publishedDate?.toInstant()) }
         return Feed(feed.title.orEmpty(), posts)
+    }
+
+    private companion object {
+        val FEED_MIME_TYPES = setOf("application/rss+xml", "application/atom+xml")
+        const val MAX_ALTERNATE_FEED_CANDIDATES = 5
+        const val MAX_DISCOVERY_REQUESTS = 10
     }
 }
