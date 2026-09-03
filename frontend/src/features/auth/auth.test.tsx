@@ -77,6 +77,7 @@ function renderAuth(path: string, options: { authenticated?: boolean } = {}) {
                   </div>
                 }
               />
+              <Route path="/subscriptions/new" element={<h1>친구 블로그 추가</h1>} />
             </Route>
           </Routes>
         </AuthSession>
@@ -132,7 +133,7 @@ describe('로그인', () => {
 });
 
 describe('가입', () => {
-  it('성공하면 accessToken을 메모리에 두고 추가 로그인 없이 홈으로 간다', async () => {
+  it('성공하면 accessToken을 메모리에 두고 바로 친구 블로그 추가 화면으로 간다', async () => {
     signupMock.mockResolvedValue(userResult);
     renderAuth('/signup');
 
@@ -141,7 +142,7 @@ describe('가입', () => {
     await userEvent.type(screen.getByLabelText('비밀번호'), 'password1234');
     await userEvent.click(screen.getByRole('button', { name: '가입하고 시작' }));
 
-    expect(await screen.findByText('피드')).toBeInTheDocument();
+    expect(await screen.findByText('친구 블로그 추가')).toBeInTheDocument();
     expect(getAccessToken()).toBe('access-token');
     expect(signupMock).toHaveBeenCalledWith({
       email: 'user@example.com',

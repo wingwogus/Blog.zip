@@ -23,7 +23,7 @@ export function SignupPage() {
     try {
       const result = await signup({ email, password, nickname });
       establishSession(result.accessToken);
-      navigate('/', { replace: true });
+      navigate('/subscriptions/new', { replace: true });
     } catch (cause) {
       setError(formErrorFrom(cause));
     } finally {
