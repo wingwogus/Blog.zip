@@ -269,8 +269,8 @@ class SubscriptionService(
     }
 
     private fun isWholeBlogFeed(uri: URI): Boolean {
-        val path = uri.path.lowercase()
-        return !path.contains("category") && !path.contains("comment") && !path.contains("tag/")
+        val location = "${uri.path}?${uri.query.orEmpty()}".lowercase()
+        return !location.contains("category") && !location.contains("comment") && !location.contains("tag")
     }
 
     private data class Response(val body: String, val isFeed: Boolean)
