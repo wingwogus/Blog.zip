@@ -127,6 +127,21 @@ class SubscriptionDiscoveryTest {
     }
 
     @Test
+    fun directlySuppliedFeedUrlIsParsedWithoutCandidateRequests() {
+        val requestedPaths = mutableListOf<String>()
+        val transport = BlogHttpTransport { uri, _, _, _, _ ->
+            requestedPaths += uri.path
+            if (uri.path == "/feed.xml") BlogHttpResponse(200, null, feed)
+            else fail("direct feed input must not trigger candidate requests")
+        }
+
+        val result = service(transport).lookup("usr_1", "example.test/feed.xml")
+
+        assertEquals("Fixture blog", result.blog.title)
+        assertEquals(listOf("/feed.xml"), requestedPaths)
+    }
+
+    @Test
     fun wholeBlogAlternateIsPreferredOverCategoryAlternate() {
         val requestedPaths = mutableListOf<String>()
         val transport = BlogHttpTransport { uri, _, _, _, _ ->

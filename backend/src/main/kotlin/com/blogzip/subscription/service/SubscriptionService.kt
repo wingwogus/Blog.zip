@@ -232,6 +232,13 @@ class SubscriptionService(
         val platformFeed = findFeed(platformCandidates, deadline, requestBudget) { reachable = reachable || it }
         if (platformFeed != null) return platformFeed
         val html = try { fetch(site, 0, deadline, requestBudget).also { reachable = it != null } } catch (e: BusinessException) { if (e.errorCode == ErrorCode.BLOG_NOT_REACHABLE && !requestBudget.isExhausted()) null else throw e }
+        if (html?.isFeed == true) {
+            try {
+                return site.toString() to parseFeed(html.body)
+            } catch (_: Exception) {
+                // Continue with the remaining supported discovery paths.
+            }
+        }
         val alternateCandidates = if (html != null && !html.isFeed) {
             Jsoup.parse(html.body, site.toString())
                 .select("link[rel=alternate]")
