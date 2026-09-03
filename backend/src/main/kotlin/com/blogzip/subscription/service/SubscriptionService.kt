@@ -107,43 +107,47 @@ class SubscriptionService(
         )
     }
 
-    @Transactional
     fun create(userId: String, token: String, friendName: String): SubscriptionResult {
         val name = friendName.trim()
         if (name.isEmpty() || name.length > 20) throw BusinessException(ErrorCode.INVALID_INPUT)
         val entry = lookupCache.getIfPresent(token) as? LookupEntry
         if (entry == null || entry.ownerId != userId) throw BusinessException(ErrorCode.BLOG_LOOKUP_EXPIRED)
-        val blog = blogs.findByCanonicalUrl(entry.canonicalUrl) ?: createBlog(entry)
+
+        val result = try {
+            inNewTransaction { createSubscription(userId, entry, name) }
+        } catch (_: BlogCreationRace) {
+            inNewTransaction { createSubscription(userId, entry, name) }
+        }
+        lookupCache.invalidate(token)
+        return result
+    }
+
+    private fun createSubscription(userId: String, entry: LookupEntry, name: String): SubscriptionResult {
+        val blog = blogs.findByCanonicalUrl(entry.canonicalUrl) ?: try {
+            createBlog(entry)
+        } catch (e: org.springframework.dao.DataIntegrityViolationException) {
+            throw BlogCreationRace(e)
+        }
         if (subscriptions.findByUserIdAndBlogId(userId, blog.getId()) != null) throw BusinessException(ErrorCode.ALREADY_SUBSCRIBED)
         val subscription = try {
             subscriptions.saveAndFlush(Subscription(userId, blog.getId(), name))
         } catch (_: org.springframework.dao.DataIntegrityViolationException) {
             throw BusinessException(ErrorCode.ALREADY_SUBSCRIBED)
         }
-        lookupCache.invalidate(token)
         return SubscriptionResult(IdPrefix.SUBSCRIPTION.encode(subscription.getId()), subscription.friendName, BlogInfo(blog.title, blog.siteUrl, blog.platform, label(blog.platform), IdPrefix.BLOG.encode(blog.getId())), subscription.createdAt)
     }
 
-    private fun findBlogAfterRace(canonicalUrl: String): Blog? =
-        transactionManager?.let {
-            TransactionTemplate(it).apply { propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW }
-                .execute { blogs.findByCanonicalUrl(canonicalUrl) }
+    private fun <T> inNewTransaction(action: () -> T): T =
+        transactionManager?.let { manager ->
+            TransactionTemplate(manager).apply { propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW }
+                .execute { action() }!!
         }
-            ?: blogs.findByCanonicalUrl(canonicalUrl)
+            ?: action()
 
     private fun createBlog(entry: LookupEntry): Blog {
-        val work = {
-            blogs.saveAndFlush(Blog(entry.canonicalUrl, entry.siteUrl, entry.feedUrl, entry.title, entry.platform)).also { states.save(BlogFetchState(it.getId())) }
-        }
-        return try {
-            transactionManager?.let {
-                TransactionTemplate(it).apply { propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW }
-                    .execute { work() }!!
-            } ?: work()
-        } catch (e: org.springframework.dao.DataIntegrityViolationException) {
-            // The failed insert has rolled back; perform the race winner read separately.
-            findBlogAfterRace(entry.canonicalUrl) ?: throw e
-        }
+        val blog = blogs.saveAndFlush(Blog(entry.canonicalUrl, entry.siteUrl, entry.feedUrl, entry.title, entry.platform))
+        states.save(BlogFetchState(blog.getId()))
+        return blog
     }
 
     @Transactional
@@ -179,7 +183,7 @@ class SubscriptionService(
     }
 
     private fun validateHost(host: String) {
-        if (host.equals("localhost", true) || host.endsWith(".localhost") || host.endsWith(".internal")) throw BusinessException(ErrorCode.BLOCKED_BLOG_URL)
+        if (host.equals("localhost", true) || host.endsWith(".localhost", true) || host.endsWith(".internal", true)) throw BusinessException(ErrorCode.BLOCKED_BLOG_URL)
         try {
             hostResolver.resolve(host).forEach { address ->
                 if (BlogUrlPolicy.isBlocked(address)) throw BusinessException(ErrorCode.BLOCKED_BLOG_URL)
@@ -216,13 +220,13 @@ class SubscriptionService(
     private fun discover(site: URI, platform: String): Pair<String, Feed>? {
         val deadline = System.nanoTime() + Duration.ofSeconds(10).toNanos()
         val requestBudget = RequestBudget(MAX_DISCOVERY_REQUESTS)
-        val candidates = mutableListOf<String>()
+        val platformCandidates = mutableListOf<String>()
         when (platform) {
-            "NAVER" -> candidates += "https://rss.blog.naver.com/${site.path.trim('/').substringAfterLast('/')}.xml"
-            "VELOG" -> candidates += "https://api.velog.io/rss/@${site.path.substringAfter("@", "")}"
-            "TISTORY" -> candidates += "${site.scheme}://${site.host}/rss"
+            "NAVER" -> platformCandidates += "https://rss.blog.naver.com/${site.path.trim('/').substringAfterLast('/')}.xml"
+            "VELOG" -> platformCandidates += "https://api.velog.io/rss/@${site.path.substringAfter("@", "")}"
+            "TISTORY" -> platformCandidates += "${site.scheme}://${site.host}/rss"
             // Connected Tistory custom domains use the same stable endpoint.
-            "GENERIC" -> candidates += "${site.scheme}://${site.host}/rss"
+            "GENERIC" -> Unit
         }
         var reachable = false
         val html = try {
@@ -230,16 +234,18 @@ class SubscriptionService(
         } catch (e: BusinessException) {
             if (e.errorCode == ErrorCode.BLOG_NOT_REACHABLE && !requestBudget.isExhausted()) null else throw e
         }
-        if (html != null && !html.isFeed) {
+        val alternateCandidates = if (html != null && !html.isFeed) {
             Jsoup.parse(html.body, site.toString())
                 .select("link[rel=alternate]")
                 .asSequence()
                 .filter { it.attr("type").lowercase() in FEED_MIME_TYPES }
                 .take(MAX_ALTERNATE_FEED_CANDIDATES)
-                .forEach { candidates += site.resolve(it.attr("href")).toString() }
-        }
-        candidates += listOf("/rss", "/feed", "/rss.xml", "/atom.xml", "/index.xml").map { site.resolve(it).toString() }
-        for (candidate in candidates.distinct()) {
+                .map { site.resolve(it.attr("href")).toString() }
+                .toList()
+        } else emptyList()
+        val conventionalCandidates = listOf("/rss", "/feed", "/rss.xml", "/atom.xml", "/index.xml")
+            .map { site.resolve(it).toString() }
+        for (candidate in (platformCandidates + alternateCandidates + conventionalCandidates).distinct()) {
             val response = try {
                 fetch(URI(candidate), 0, deadline, requestBudget).also { reachable = reachable || it != null }
             } catch (e: BusinessException) {
@@ -255,6 +261,7 @@ class SubscriptionService(
     }
 
     private data class Response(val body: String, val isFeed: Boolean)
+    private class BlogCreationRace(cause: Throwable) : RuntimeException(cause)
     private class RequestBudget(private val limit: Int) {
         private var consumed = 0
 

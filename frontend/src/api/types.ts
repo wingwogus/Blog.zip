@@ -41,7 +41,7 @@ export interface BlogLookup {
 
 export interface BlogLookupResult {
   blog: BlogLookup;
-  recentPosts: Array<{ title: string; publishedAt: string }>;
+  recentPosts: Array<{ title: string; publishedAt: string | null }>;
   alreadySubscribed: boolean;
   currentFriendName: string | null;
   lookupToken: string;

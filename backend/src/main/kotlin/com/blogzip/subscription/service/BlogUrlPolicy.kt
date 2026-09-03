@@ -27,11 +27,23 @@ object BlogUrlPolicy {
   }
   if(bytes.size==16) {
    if ((bytes[0].toInt() and 0xfe)==0xfc) return true
+   if (isIpv6DocumentationOrSpecialPurpose(bytes)) return true
    // IPv4-mapped IPv6 (including ::ffff:127.0.0.1) must obey IPv4 policy.
    if (bytes.copyOfRange(0, 10).all { it == 0.toByte() } && bytes[10] == 0xff.toByte() && bytes[11] == 0xff.toByte()) {
     return isBlocked(java.net.InetAddress.getByAddress(bytes.copyOfRange(12, 16)))
    }
   }
   return false
+ }
+
+ private fun isIpv6DocumentationOrSpecialPurpose(bytes: ByteArray): Boolean {
+  val first = bytes[0].toInt() and 255
+  val second = bytes[1].toInt() and 255
+  val third = bytes[2].toInt() and 255
+  val fourth = bytes[3].toInt() and 255
+  // RFC 6666 discard-only, RFC 4291/5156 special-purpose, RFC 3849 documentation.
+  if (first == 0x01 && second == 0x00 && third == 0x00 && fourth == 0x00) return true
+  if (first == 0x20 && second == 0x01 && third == 0x0d && fourth == 0xb8) return true
+  return first == 0x20 && second == 0x01 && third == 0x00 && fourth == 0x00
  }
 }
