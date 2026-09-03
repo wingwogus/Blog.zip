@@ -48,17 +48,16 @@ backend/
     │   │   │   ├── GlobalExceptionHandler.kt
     │   │   │   └── ulid/
     │   │   ├── config/
-    │   │   │   ├── SecurityConfig.kt
-    │   │   │   ├── SwaggerConfig.kt
-    │   │   │   ├── CacheConfig.kt
-    │   │   │   └── SchedulerConfig.kt
+    │   │   │   └── SwaggerConfig.kt
     │   │   ├── auth/
-    │   │   │   ├── domain/
-    │   │   │   ├── application/
-    │   │   │   ├── infra/
-    │   │   │   └── api/
+    │   │   │   ├── config/
+    │   │   │   ├── controller/
+    │   │   │   ├── service/
+    │   │   │   ├── repository/
+    │   │   │   └── domain/
     │   │   ├── blog/
     │   │   ├── subscription/
+    │   │   │   └── config/
     │   │   ├── feed/
     │   │   └── ownership/
     │   └── resources/
@@ -70,23 +69,24 @@ backend/
 ```
 
 - Base package: `com.blogzip`
-- **기능(feature) 우선, 그다음 계층.** `subscription/api`, `subscription/domain` 형태다.
-  템플릿의 `api.auth.controller`가 계층 우선인 것과 반대다.
+- **기능(feature) 우선, 그다음 역할.** `subscription/controller`, `subscription/service`,
+  `subscription/repository`, `subscription/domain` 형태다. 템플릿의 `api.auth.controller`가
+  계층 우선인 것과 반대다.
   기능 하나를 작업할 때 한 디렉토리 안에서 끝나는 쪽을 택했다.
-- `common`과 `config`는 기능에 속하지 않는 것만 둔다. 여기가 커지면 설계가 잘못됐다는 신호다.
+- `common`에는 기능에 속하지 않는 횡단 관심사만 둔다. 설정도 가능한 한 해당 기능의
+  `config`에 둔다. 루트 `config`에는 애플리케이션 공통 설정만 둔다.
 
 ### 의존 방향
 
 ```text
-api -> application -> domain
-infra -> domain
-application -> (infra의 인터페이스는 domain 또는 application에 정의)
+controller -> service -> domain
+service -> repository -> domain
 ```
 
 컴파일러가 막아주지 않으므로 리뷰에서 확인한다. 확인할 항목:
 
-- `domain` 패키지가 Spring Web, `api`, `application`을 import하지 않는다.
-- `application`이 `api`의 DTO를 import하지 않는다.
+- `domain` 패키지가 Spring Web, `controller`, `service`, `repository`를 import하지 않는다.
+- `service`가 `controller`의 DTO를 import하지 않는다.
 - 엔티티가 API 응답으로 직접 나가지 않는다.
 
 이건 ArchUnit으로 테스트할 수 있다. 모듈 분리 대신 이걸 넣는 게 이 결정의 전제다.
@@ -96,7 +96,7 @@ application -> (infra의 인터페이스는 domain 또는 application에 정의)
 
 Feed 수집은 Spring Batch가 필요한 작업이 아니다. `@Scheduled` 하나로 충분하다. (`004-post-collection.md`)
 
-수집 로직은 `feed/application`에 두고 스케줄러 진입점만 얇게 만든다. 인스턴스가 1대이므로 API 서버와 같은 프로세스에서 돈다. (`009-ephemeral-state.md`)
+수집 로직은 `feed/service`에 두고 스케줄러 진입점만 얇게 만든다. 인스턴스가 1대이므로 API 서버와 같은 프로세스에서 돈다. (`009-ephemeral-state.md`)
 
 ---
 

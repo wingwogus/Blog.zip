@@ -1,10 +1,9 @@
-package com.blogzip.config
+package com.blogzip.auth.config
 
-import com.blogzip.auth.infra.AccessJwtProvider
-import com.blogzip.auth.infra.JwtAuthenticationFilter
+import com.blogzip.auth.service.AccessJwtProvider
+import com.blogzip.auth.service.JwtAuthenticationFilter
 import com.blogzip.common.error.ErrorCode
 import com.blogzip.common.error.ErrorResponseFactory
-import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -28,7 +27,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
  * 인증 설정. docs/decisions/002-auth-strategy.md
  */
 @Configuration
-class SecurityConfig(
+class AuthSecurityConfig(
     private val errorResponses: ErrorResponseFactory,
     private val corsProperties: CorsProperties,
     private val accessJwtProvider: AccessJwtProvider,
@@ -121,8 +120,3 @@ class SecurityConfig(
         )
     }
 }
-
-@ConfigurationProperties(prefix = "app.cors")
-data class CorsProperties(
-    val allowedOrigins: List<String> = emptyList(),
-)

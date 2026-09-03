@@ -1,7 +1,7 @@
 package com.blogzip.auth
 
 import com.blogzip.auth.domain.RefreshToken
-import com.blogzip.auth.infra.RefreshTokenHasher
+import com.blogzip.auth.service.RefreshTokenHasher
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.security.MessageDigest

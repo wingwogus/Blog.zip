@@ -1,4 +1,4 @@
-package com.blogzip.auth.infra
+package com.blogzip.auth.service
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest

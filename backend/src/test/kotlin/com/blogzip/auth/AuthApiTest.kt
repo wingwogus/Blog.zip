@@ -1,6 +1,6 @@
 package com.blogzip.auth
 
-import com.blogzip.auth.api.RefreshTokenCookieWriter
+import com.blogzip.auth.controller.RefreshTokenCookieWriter
 import com.blogzip.common.id.IdPrefix
 import com.blogzip.common.id.Ulid
 import com.blogzip.support.IntegrationTest

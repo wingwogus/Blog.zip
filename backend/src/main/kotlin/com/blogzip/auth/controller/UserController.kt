@@ -1,6 +1,6 @@
-package com.blogzip.auth.api
+package com.blogzip.auth.controller
 
-import com.blogzip.auth.application.AuthService
+import com.blogzip.auth.service.AuthService
 import com.blogzip.common.web.ApiResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag

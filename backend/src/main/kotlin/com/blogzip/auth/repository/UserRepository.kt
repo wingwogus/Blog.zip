@@ -1,4 +1,4 @@
-package com.blogzip.auth.infra
+package com.blogzip.auth.repository
 
 import com.blogzip.auth.domain.User
 import jakarta.persistence.LockModeType

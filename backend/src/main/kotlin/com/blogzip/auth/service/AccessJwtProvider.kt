@@ -1,9 +1,9 @@
-package com.blogzip.auth.infra
+package com.blogzip.auth.service
 
 import com.blogzip.auth.domain.AccessJwt
 import com.blogzip.common.error.BusinessException
 import com.blogzip.common.error.ErrorCode
-import com.blogzip.config.AuthProperties
+import com.blogzip.auth.config.AuthProperties
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.JwtParser

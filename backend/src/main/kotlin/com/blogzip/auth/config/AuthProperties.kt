@@ -1,4 +1,4 @@
-package com.blogzip.config
+package com.blogzip.auth.config
 
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank

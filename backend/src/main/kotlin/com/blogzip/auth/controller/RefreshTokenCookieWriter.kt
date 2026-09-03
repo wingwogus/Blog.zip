@@ -1,6 +1,6 @@
-package com.blogzip.auth.api
+package com.blogzip.auth.controller
 
-import com.blogzip.config.AuthProperties
+import com.blogzip.auth.config.AuthProperties
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseCookie
 import org.springframework.stereotype.Component

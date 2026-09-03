@@ -1,9 +1,9 @@
-package com.blogzip.auth.application
+package com.blogzip.auth.service
 
 import com.blogzip.auth.domain.Email
 import com.blogzip.common.error.BusinessException
 import com.blogzip.common.error.ErrorCode
-import com.blogzip.config.AuthProperties
+import com.blogzip.auth.config.AuthProperties
 import com.github.benmanes.caffeine.cache.Cache
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component

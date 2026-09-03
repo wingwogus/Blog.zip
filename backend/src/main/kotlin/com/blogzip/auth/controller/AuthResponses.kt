@@ -1,6 +1,6 @@
-package com.blogzip.auth.api
+package com.blogzip.auth.controller
 
-import com.blogzip.auth.application.AuthenticatedUser
+import com.blogzip.auth.service.AuthenticatedUser
 import com.blogzip.common.id.IdPrefix
 import java.time.Instant
 

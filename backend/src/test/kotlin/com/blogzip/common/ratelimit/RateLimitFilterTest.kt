@@ -1,9 +1,9 @@
 package com.blogzip.common.ratelimit
 
-import com.blogzip.auth.infra.AccessJwtProvider
+import com.blogzip.auth.service.AccessJwtProvider
 import com.blogzip.common.error.ErrorResponseFactory
 import com.blogzip.common.logging.MdcLoggingFilter
-import com.blogzip.config.AuthProperties
+import com.blogzip.auth.config.AuthProperties
 import com.github.benmanes.caffeine.cache.Caffeine
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach

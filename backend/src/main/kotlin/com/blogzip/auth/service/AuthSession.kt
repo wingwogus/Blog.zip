@@ -1,4 +1,4 @@
-package com.blogzip.auth.application
+package com.blogzip.auth.service
 
 import com.blogzip.auth.domain.User
 import java.time.Instant
