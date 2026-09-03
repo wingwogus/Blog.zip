@@ -32,6 +32,28 @@ export interface BlogSummary {
   platformLabel: string;
 }
 
+export interface BlogLookup {
+  title: string;
+  siteUrl: string;
+  platform: Platform;
+  platformLabel: string;
+}
+
+export interface BlogLookupResult {
+  blog: BlogLookup;
+  recentPosts: Array<{ title: string; publishedAt: string }>;
+  alreadySubscribed: boolean;
+  currentFriendName: string | null;
+  lookupToken: string;
+}
+
+export interface SubscriptionCreateResult {
+  id: string;
+  friendName: string;
+  blog: BlogSummary;
+  createdAt: string;
+}
+
 /**
  * 피드 항목. docs/specs/feed.md 8장.
  *
