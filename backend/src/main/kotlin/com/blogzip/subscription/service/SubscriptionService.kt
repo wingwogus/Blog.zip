@@ -229,11 +229,9 @@ class SubscriptionService(
             "GENERIC" -> Unit
         }
         var reachable = false
-        val html = try {
-            fetch(site, 0, deadline, requestBudget).also { reachable = it != null }
-        } catch (e: BusinessException) {
-            if (e.errorCode == ErrorCode.BLOG_NOT_REACHABLE && !requestBudget.isExhausted()) null else throw e
-        }
+        val platformFeed = findFeed(platformCandidates, deadline, requestBudget) { reachable = reachable || it }
+        if (platformFeed != null) return platformFeed
+        val html = try { fetch(site, 0, deadline, requestBudget).also { reachable = it != null } } catch (e: BusinessException) { if (e.errorCode == ErrorCode.BLOG_NOT_REACHABLE && !requestBudget.isExhausted()) null else throw e }
         val alternateCandidates = if (html != null && !html.isFeed) {
             Jsoup.parse(html.body, site.toString())
                 .select("link[rel=alternate]")
@@ -245,9 +243,19 @@ class SubscriptionService(
         } else emptyList()
         val conventionalCandidates = listOf("/rss", "/feed", "/rss.xml", "/atom.xml", "/index.xml")
             .map { site.resolve(it).toString() }
-        for (candidate in (platformCandidates + alternateCandidates + conventionalCandidates).distinct()) {
+        return findFeed((alternateCandidates + conventionalCandidates).distinct(), deadline, requestBudget) { reachable = reachable || it }
+            ?: if (!reachable) throw BusinessException(ErrorCode.BLOG_NOT_REACHABLE) else null
+    }
+
+    private fun findFeed(
+        candidates: List<String>,
+        deadline: Long,
+        requestBudget: RequestBudget,
+        markReachable: (Boolean) -> Unit,
+    ): Pair<String, Feed>? {
+        for (candidate in candidates.sortedBy { if (isWholeBlogFeed(URI(it))) 0 else 1 }) {
             val response = try {
-                fetch(URI(candidate), 0, deadline, requestBudget).also { reachable = reachable || it != null }
+                fetch(URI(candidate), 0, deadline, requestBudget).also { markReachable(it != null) }
             } catch (e: BusinessException) {
                 if (e.errorCode == ErrorCode.BLOG_NOT_REACHABLE && !requestBudget.isExhausted()) null else throw e
             } ?: continue
@@ -256,8 +264,12 @@ class SubscriptionService(
                 catch (_: Exception) { continue }
             }
         }
-        if (!reachable) throw BusinessException(ErrorCode.BLOG_NOT_REACHABLE)
         return null
+    }
+
+    private fun isWholeBlogFeed(uri: URI): Boolean {
+        val path = uri.path.lowercase()
+        return !path.contains("category") && !path.contains("comment") && !path.contains("tag/")
     }
 
     private data class Response(val body: String, val isFeed: Boolean)

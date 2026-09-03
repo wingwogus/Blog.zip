@@ -13,11 +13,15 @@ class BlogUrlPolicyTest {
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("127.0.0.1")))
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("10.0.0.1")))
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("192.0.2.1")))
+  assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("::2")))
+  assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("3fff::1")))
+  assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("64:ff9b::1")))
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("2001:db8::1")))
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("fc00::1")))
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("224.0.0.1")))
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("::ffff:127.0.0.1")))
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("::ffff:10.0.0.1")))
+  assertFalse(BlogUrlPolicy.isBlocked(InetAddress.getByName("2606:4700:4700::1111")))
  }
  @Test fun rejectsBadScheme() { assertThrows(IllegalArgumentException::class.java) { BlogUrlPolicy.canonical("ftp://example.com") } }
 }

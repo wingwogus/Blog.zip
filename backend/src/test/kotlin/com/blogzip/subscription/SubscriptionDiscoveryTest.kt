@@ -111,6 +111,42 @@ class SubscriptionDiscoveryTest {
     }
 
     @Test
+    fun platformFeedIsTriedBeforeTheInputPage() {
+        val requestedUris = mutableListOf<URI>()
+        val transport = BlogHttpTransport { uri, _, _, _, _ ->
+            requestedUris += uri
+            if (uri.host == "api.velog.io") BlogHttpResponse(200, null, feed)
+            else fail("input page must not be requested when the platform feed succeeds")
+        }
+        val service = service(transport)
+
+        val result = service.lookup("usr_1", "velog.io/@friend")
+
+        assertEquals("Fixture blog", result.blog.title)
+        assertEquals(listOf("api.velog.io"), requestedUris.map { it.host })
+    }
+
+    @Test
+    fun wholeBlogAlternateIsPreferredOverCategoryAlternate() {
+        val requestedPaths = mutableListOf<String>()
+        val transport = BlogHttpTransport { uri, _, _, _, _ ->
+            requestedPaths += uri.path
+            when (uri.path) {
+                "/" -> BlogHttpResponse(200, null, "<html><head><link rel='alternate' type='application/rss+xml' href='/category/dev.xml'><link rel='alternate' type='application/rss+xml' href='/all.xml'></head></html>")
+                "/all.xml" -> BlogHttpResponse(200, null, feed)
+                "/category/dev.xml" -> BlogHttpResponse(200, null, """<?xml version="1.0"?><rss version="2.0"><channel><title>Category feed</title><item><title>Only category</title></item></channel></rss>""")
+                else -> BlogHttpResponse(404, null, null)
+            }
+        }
+        val service = service(transport)
+
+        val result = service.lookup("usr_1", "example.test")
+
+        assertEquals("Fixture blog", result.blog.title)
+        assertEquals(listOf("/", "/all.xml"), requestedPaths)
+    }
+
+    @Test
     fun redirectHopsConsumeTheSharedDiscoveryRequestBudget() {
         val requests = mutableListOf<URI>()
         val transport = BlogHttpTransport { uri, _, _, _, _ ->
