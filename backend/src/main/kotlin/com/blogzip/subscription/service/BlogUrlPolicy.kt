@@ -41,10 +41,21 @@ object BlogUrlPolicy {
   val second = bytes[1].toInt() and 255
   val third = bytes[2].toInt() and 255
   val fourth = bytes[3].toInt() and 255
-  // IANA IPv6 special-purpose ranges that are not globally routable destinations.
-  if (first == 0x00 || first == 0x01) return true
+  // Only 2000::/3 is global unicast; special-purpose allocations inside it are denied below.
+  if (first !in 0x20..0x3f) return true
   if (first == 0x3f && second == 0xff && third and 0xf0 == 0x00) return true
+  if (first == 0x20 && second == 0x01) {
+   if (third == 0x00 && fourth and 0xe0 == 0x00) return true
+   if (third == 0x00 && fourth == 0x02) return true
+   if (third == 0x00 && fourth == 0x03) return true
+   if (third == 0x00 && fourth and 0xfc == 0x04) return true
+   if (third == 0x00 && fourth and 0xf0 == 0x20) return true
+   if (third == 0x00 && fourth and 0xf0 == 0x30) return true
+   if (third == 0x0d && fourth == 0xb8) return true
+  }
+  if (first == 0x20 && second == 0x02) return true
+  if (first == 0x64 && second == 0xff && third == 0x9b && fourth == 0x01) return true
   if (first == 0x20 && second == 0x01 && third == 0x0d && fourth == 0xb8) return true
-  return first == 0x64 && second == 0xff && third == 0x9b && fourth == 0x01
+  return false
  }
 }

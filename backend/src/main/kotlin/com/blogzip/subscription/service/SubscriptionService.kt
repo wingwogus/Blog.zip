@@ -237,8 +237,9 @@ class SubscriptionService(
                 .select("link[rel=alternate]")
                 .asSequence()
                 .filter { it.attr("type").lowercase() in FEED_MIME_TYPES }
-                .take(MAX_ALTERNATE_FEED_CANDIDATES)
                 .map { site.resolve(it.attr("href")).toString() }
+                .sortedBy { if (isWholeBlogFeed(URI(it))) 0 else 1 }
+                .take(MAX_ALTERNATE_FEED_CANDIDATES)
                 .toList()
         } else emptyList()
         val conventionalCandidates = listOf("/rss", "/feed", "/rss.xml", "/atom.xml", "/index.xml")

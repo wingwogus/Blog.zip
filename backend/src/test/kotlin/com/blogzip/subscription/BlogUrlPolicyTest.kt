@@ -16,6 +16,7 @@ class BlogUrlPolicyTest {
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("::2")))
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("3fff::1")))
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("64:ff9b::1")))
+  assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("2001:2::1")))
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("2001:db8::1")))
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("fc00::1")))
   assertTrue(BlogUrlPolicy.isBlocked(InetAddress.getByName("224.0.0.1")))

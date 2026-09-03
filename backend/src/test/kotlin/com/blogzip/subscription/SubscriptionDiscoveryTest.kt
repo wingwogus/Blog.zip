@@ -147,6 +147,25 @@ class SubscriptionDiscoveryTest {
     }
 
     @Test
+    fun wholeBlogAlternateSurvivesTheCandidateCap() {
+        val categoryLinks = (1..5).joinToString("") { "<link rel='alternate' type='application/rss+xml' href='/category/$it.xml'>" }
+        val requestedPaths = mutableListOf<String>()
+        val transport = BlogHttpTransport { uri, _, _, _, _ ->
+            requestedPaths += uri.path
+            when (uri.path) {
+                "/" -> BlogHttpResponse(200, null, "<html><head>$categoryLinks<link rel='alternate' type='application/rss+xml' href='/all.xml'></head></html>")
+                "/all.xml" -> BlogHttpResponse(200, null, feed)
+                else -> BlogHttpResponse(404, null, null)
+            }
+        }
+
+        val result = service(transport).lookup("usr_1", "example.test")
+
+        assertEquals("Fixture blog", result.blog.title)
+        assertEquals(listOf("/", "/all.xml"), requestedPaths)
+    }
+
+    @Test
     fun redirectHopsConsumeTheSharedDiscoveryRequestBudget() {
         val requests = mutableListOf<URI>()
         val transport = BlogHttpTransport { uri, _, _, _, _ ->
