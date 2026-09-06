@@ -1,9 +1,9 @@
 package com.blogzip.auth
 
-import com.blogzip.auth.application.LoginAttemptLimiter
+import com.blogzip.auth.service.LoginAttemptLimiter
 import com.blogzip.common.error.BusinessException
 import com.blogzip.common.error.ErrorCode
-import com.blogzip.config.AuthProperties
+import com.blogzip.auth.config.AuthProperties
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import org.assertj.core.api.Assertions.assertThat

@@ -1,11 +1,11 @@
 package com.blogzip.auth
 
-import com.blogzip.auth.application.AuthService
+import com.blogzip.auth.service.AuthService
 import com.blogzip.auth.domain.RefreshToken
 import com.blogzip.auth.domain.User
-import com.blogzip.auth.infra.RefreshTokenHasher
-import com.blogzip.auth.infra.RefreshTokenRepository
-import com.blogzip.auth.infra.UserRepository
+import com.blogzip.auth.repository.RefreshTokenRepository
+import com.blogzip.auth.repository.UserRepository
+import com.blogzip.auth.service.RefreshTokenHasher
 import com.blogzip.common.id.Ulid
 import com.blogzip.support.IntegrationTest
 import org.assertj.core.api.Assertions.assertThat

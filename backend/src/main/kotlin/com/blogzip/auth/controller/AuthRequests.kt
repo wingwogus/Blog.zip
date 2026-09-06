@@ -1,4 +1,4 @@
-package com.blogzip.auth.api
+package com.blogzip.auth.controller
 
 import com.blogzip.auth.domain.Email
 import jakarta.validation.constraints.Email as EmailFormat

@@ -22,11 +22,11 @@ class LayerDependencyTest {
         .importPackages("com.blogzip")
 
     @Test
-    fun `domain은 application, infra, api를 참조하지 않는다`() {
+    fun `domain은 service, repository, controller를 참조하지 않는다`() {
         noClasses()
             .that().resideInAPackage("..domain..")
             .should().dependOnClassesThat()
-            .resideInAnyPackage("..application..", "..infra..", "..api..")
+            .resideInAnyPackage("..service..", "..repository..", "..controller..")
             .allowEmptyShould(true)
             .check(classes)
     }
@@ -46,10 +46,10 @@ class LayerDependencyTest {
     }
 
     @Test
-    fun `application은 api를 참조하지 않는다`() {
+    fun `service는 controller를 참조하지 않는다`() {
         noClasses()
-            .that().resideInAPackage("..application..")
-            .should().dependOnClassesThat().resideInAPackage("..api..")
+            .that().resideInAPackage("..service..")
+            .should().dependOnClassesThat().resideInAPackage("..controller..")
             .allowEmptyShould(true)
             .check(classes)
     }
@@ -59,7 +59,7 @@ class LayerDependencyTest {
         // 컨트롤러는 응답 DTO를 반환한다. 엔티티 노출은 feedUrl 등 내부 값 유출로 이어진다.
         // docs/decisions/007-persistence-stack.md, PRD P-002
         noClasses()
-            .that().resideInAPackage("..api..")
+            .that().resideInAPackage("..controller..")
             .and().haveSimpleNameEndingWith("Response")
             .should().dependOnClassesThat().areAnnotatedWith(jakarta.persistence.Entity::class.java)
             .allowEmptyShould(true)

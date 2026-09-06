@@ -1,10 +1,9 @@
-package com.blogzip.auth.application
+package com.blogzip.auth.service
 
 import com.blogzip.auth.domain.RefreshToken
-import com.blogzip.auth.infra.RefreshTokenHasher
-import com.blogzip.auth.infra.RefreshTokenRepository
-import com.blogzip.auth.infra.UserRepository
-import com.blogzip.config.AuthProperties
+import com.blogzip.auth.repository.RefreshTokenRepository
+import com.blogzip.auth.repository.UserRepository
+import com.blogzip.auth.config.AuthProperties
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom

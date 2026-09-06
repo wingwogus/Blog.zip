@@ -16,8 +16,14 @@ export function RequireAuth() {
 /** 이미 로그인한 사용자는 가입/로그인 화면을 다시 보지 않는다. */
 export function GuestOnly() {
   const { status } = useAuth();
+  const location = useLocation();
 
   if (status === 'unknown') return <SessionPending />;
-  if (status === 'authenticated') return <Navigate to="/" replace />;
+  if (status === 'authenticated') {
+    const destination = location.state?.from?.pathname ?? (
+      location.pathname === '/signup' ? '/subscriptions/new' : '/'
+    );
+    return <Navigate to={destination} replace />;
+  }
   return <Outlet />;
 }

@@ -1,12 +1,12 @@
 package com.blogzip.auth
 
-import com.blogzip.auth.infra.AccessJwtProvider
-import com.blogzip.auth.infra.JwtAuthenticationFilter
+import com.blogzip.auth.service.AccessJwtProvider
+import com.blogzip.auth.service.JwtAuthenticationFilter
 import com.blogzip.common.error.ErrorCode
 import com.blogzip.common.error.ErrorResponseFactory
 import com.blogzip.common.id.Ulid
 import com.blogzip.common.logging.LoggingUtil
-import com.blogzip.config.AuthProperties
+import com.blogzip.auth.config.AuthProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test

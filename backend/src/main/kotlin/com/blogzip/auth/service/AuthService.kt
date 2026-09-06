@@ -1,9 +1,8 @@
-package com.blogzip.auth.application
+package com.blogzip.auth.service
 
 import com.blogzip.auth.domain.Email
 import com.blogzip.auth.domain.User
-import com.blogzip.auth.infra.AccessJwtProvider
-import com.blogzip.auth.infra.UserRepository
+import com.blogzip.auth.repository.UserRepository
 import com.blogzip.common.error.BusinessException
 import com.blogzip.common.error.ErrorCode
 import org.springframework.dao.DataIntegrityViolationException

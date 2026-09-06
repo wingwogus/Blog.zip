@@ -1,4 +1,4 @@
-package com.blogzip.auth.infra
+package com.blogzip.auth.service
 
 import com.blogzip.common.error.BusinessException
 import com.blogzip.common.error.ErrorCode

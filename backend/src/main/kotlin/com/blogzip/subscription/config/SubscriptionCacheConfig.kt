@@ -1,4 +1,4 @@
-package com.blogzip.config
+package com.blogzip.subscription.config
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -17,7 +17,7 @@ import java.time.Duration
  * 모든 캐시에 만료 시간과 최대 크기를 지정한다. 상한 없는 Map은 OOM으로 이어진다.
  */
 @Configuration
-class CacheConfig(
+class SubscriptionCacheConfig(
     private val properties: EphemeralStateProperties,
 ) {
 
@@ -28,18 +28,16 @@ class CacheConfig(
         .maximumSize(properties.lookupTokenMaxEntries)
         .build()
 
-    /** 로그인 실패 카운터와 요청 제한 카운터. docs/decisions/002-auth-strategy.md */
     @Bean
-    fun rateLimitCache(): Cache<String, Any> = Caffeine.newBuilder()
-        .expireAfterWrite(properties.rateLimitWindow)
-        .maximumSize(properties.rateLimitMaxEntries)
+    fun blogLookupRateCache(): Cache<String, Any> = Caffeine.newBuilder()
+        .expireAfterWrite(Duration.ofMinutes(1))
+        .maximumSize(100_000)
         .build()
+
 }
 
 @ConfigurationProperties(prefix = "app.ephemeral")
 data class EphemeralStateProperties(
     val lookupTokenTtl: Duration = Duration.ofMinutes(10),
     val lookupTokenMaxEntries: Long = 10_000,
-    val rateLimitWindow: Duration = Duration.ofMinutes(10),
-    val rateLimitMaxEntries: Long = 100_000,
 )

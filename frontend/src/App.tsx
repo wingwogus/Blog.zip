@@ -43,7 +43,7 @@ export function App() {
               <Route path="/signup" element={<SignupPage />} />
             </Route>
             <Route element={<RequireAuth />}>
-              <Route element={<AppShell />}>
+              <Route path="/" element={<AppShell />}>
                 <Route path="/" element={<FeedPage />} />
                 <Route path="/subscriptions/new" element={<SubscriptionEntryPage />} />
               </Route>

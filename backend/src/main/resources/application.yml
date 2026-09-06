@@ -41,7 +41,6 @@ app:
     login-block-duration: 10m
   ephemeral:
     lookup-token-ttl: 10m
-    rate-limit-window: 10m
 
 logging:
   pattern:

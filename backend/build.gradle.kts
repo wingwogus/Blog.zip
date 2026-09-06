@@ -47,6 +47,9 @@ dependencies {
 
     // 단기 상태(요청 제한, lookupToken). docs/decisions/009-ephemeral-state.md
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.4")
+    implementation("org.jsoup:jsoup:1.18.3")
+    implementation("com.rometools:rome:2.1.0")
+    implementation("org.apache.httpcomponents.client5:httpclient5:5.5.1")
 
     // 인증. docs/decisions/002-auth-strategy.md
     implementation("io.jsonwebtoken:jjwt-api:0.13.0")

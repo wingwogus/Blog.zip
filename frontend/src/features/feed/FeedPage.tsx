@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { api } from '@/api/client';
 import type { FeedItem } from '@/api/types';
 import { FeedCard } from './FeedCard';
@@ -77,6 +78,14 @@ export function FeedPage() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-4">
+      <div className="mb-4 flex justify-end">
+        <Link
+          to="/subscriptions/new"
+          className="inline-flex min-h-11 items-center rounded-lg border border-slate-200 bg-white px-3 text-[15px] font-semibold text-slate-800"
+        >
+          친구 블로그 추가
+        </Link>
+      </div>
       <ul className="flex flex-col gap-3">
         {items.map((item) => (
           <li key={item.postId}>
@@ -132,12 +141,12 @@ function StatusPanel({ title, description, action }: StatusPanelProps) {
       {action && (
         <div className="mt-4">
           {action.href ? (
-            <a
-              href={action.href}
+            <Link
+              to={action.href}
               className="inline-flex min-h-11 items-center rounded-lg bg-slate-900 px-4 text-[15px] font-semibold text-white"
             >
               {action.label}
-            </a>
+            </Link>
           ) : (
             <button
               type="button"

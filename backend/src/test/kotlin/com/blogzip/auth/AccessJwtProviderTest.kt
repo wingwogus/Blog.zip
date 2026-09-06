@@ -1,10 +1,10 @@
 package com.blogzip.auth
 
-import com.blogzip.auth.infra.AccessJwtProvider
+import com.blogzip.auth.service.AccessJwtProvider
 import com.blogzip.common.error.BusinessException
 import com.blogzip.common.error.ErrorCode
 import com.blogzip.common.id.Ulid
-import com.blogzip.config.AuthProperties
+import com.blogzip.auth.config.AuthProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test

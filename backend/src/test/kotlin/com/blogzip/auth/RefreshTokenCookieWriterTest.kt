@@ -1,7 +1,7 @@
 package com.blogzip.auth
 
-import com.blogzip.auth.api.RefreshTokenCookieWriter
-import com.blogzip.config.AuthProperties
+import com.blogzip.auth.controller.RefreshTokenCookieWriter
+import com.blogzip.auth.config.AuthProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders

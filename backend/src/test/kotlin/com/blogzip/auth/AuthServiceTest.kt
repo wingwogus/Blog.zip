@@ -1,17 +1,17 @@
 package com.blogzip.auth
 
-import com.blogzip.auth.application.AuthService
-import com.blogzip.auth.application.LoginAttemptLimiter
-import com.blogzip.auth.application.RefreshTokenService
+import com.blogzip.auth.service.AuthService
+import com.blogzip.auth.service.LoginAttemptLimiter
+import com.blogzip.auth.service.RefreshTokenService
 import com.blogzip.auth.domain.RefreshToken
 import com.blogzip.auth.domain.User
-import com.blogzip.auth.infra.AccessJwtProvider
-import com.blogzip.auth.infra.RefreshTokenHasher
-import com.blogzip.auth.infra.RefreshTokenRepository
-import com.blogzip.auth.infra.UserRepository
+import com.blogzip.auth.repository.RefreshTokenRepository
+import com.blogzip.auth.repository.UserRepository
+import com.blogzip.auth.service.AccessJwtProvider
+import com.blogzip.auth.service.RefreshTokenHasher
 import com.blogzip.common.error.BusinessException
 import com.blogzip.common.error.ErrorCode
-import com.blogzip.config.AuthProperties
+import com.blogzip.auth.config.AuthProperties
 import com.github.benmanes.caffeine.cache.Caffeine
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode

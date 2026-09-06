@@ -1,6 +1,6 @@
 package com.blogzip.common.ratelimit
 
-import com.blogzip.auth.infra.AccessJwtProvider
+import com.blogzip.auth.service.AccessJwtProvider
 import com.blogzip.common.error.ErrorCode
 import com.blogzip.common.error.ErrorResponseFactory
 import jakarta.servlet.FilterChain
