@@ -244,8 +244,12 @@ class SubscriptionService(
                 .select("link[rel=alternate]")
                 .asSequence()
                 .filter { it.attr("type").lowercase() in FEED_MIME_TYPES }
-                .map { site.resolve(it.attr("href")).toString() }
-                .sortedBy { if (isWholeBlogFeed(URI(it))) 0 else 1 }
+                .mapNotNull {
+                    try { site.resolve(it.attr("href")) }
+                    catch (_: IllegalArgumentException) { null }
+                }
+                .filter { it.scheme in setOf("http", "https") && it.host != null && isWholeBlogFeed(it) }
+                .map { it.toString() }
                 .take(MAX_ALTERNATE_FEED_CANDIDATES)
                 .toList()
         } else emptyList()
@@ -261,7 +265,7 @@ class SubscriptionService(
         requestBudget: RequestBudget,
         markReachable: (Boolean) -> Unit,
     ): Pair<String, Feed>? {
-        for (candidate in candidates.sortedBy { if (isWholeBlogFeed(URI(it))) 0 else 1 }) {
+        for (candidate in candidates.filter { isWholeBlogFeed(URI(it)) }) {
             val response = try {
                 fetch(URI(candidate), 0, deadline, requestBudget).also { markReachable(it != null) }
             } catch (e: BusinessException) {

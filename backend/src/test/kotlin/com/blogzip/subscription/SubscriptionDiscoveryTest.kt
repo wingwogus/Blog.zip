@@ -381,6 +381,37 @@ class SubscriptionDiscoveryTest {
         assertEquals("https://two.test/", service.lookup("usr_1", "two.test/post").blog.siteUrl)
     }
 
+    @Test
+    fun categoryAndCommentFeedsAreNotSelectedWhenNoWholeFeedExists() {
+        val requests = mutableListOf<URI>()
+        val transport = BlogHttpTransport { uri, _, _, _, _ ->
+            requests += uri
+            when (uri.path) {
+                "/" -> BlogHttpResponse(200, null, "<html><head><link rel='alternate' type='application/rss+xml' href='/category/dev.xml'><link rel='alternate' type='application/rss+xml' href='/comments.xml'></head></html>")
+                "/category/dev.xml", "/comments.xml" -> BlogHttpResponse(200, null, feed)
+                else -> BlogHttpResponse(404, null, null)
+            }
+        }
+
+        val error = assertThrows(BusinessException::class.java) { service(transport).lookup("usr_1", "example.test") }
+
+        assertEquals(ErrorCode.BLOG_NOT_SUPPORTED, error.errorCode)
+        assertFalse(requests.any { it.path.startsWith("/category/") || it.path == "/comments.xml" })
+    }
+
+    @Test
+    fun malformedAlternateDoesNotPreventValidFeedDiscovery() {
+        val transport = BlogHttpTransport { uri, _, _, _, _ ->
+            when (uri.path) {
+                "/" -> BlogHttpResponse(200, null, "<html><head><link rel='alternate' type='application/rss+xml' href='http://[invalid'><link rel='alternate' type='application/rss+xml' href='/feed.xml'></head></html>")
+                "/feed.xml" -> BlogHttpResponse(200, null, feed)
+                else -> BlogHttpResponse(404, null, null)
+            }
+        }
+
+        assertEquals("Fixture blog", service(transport).lookup("usr_1", "example.test").blog.title)
+    }
+
     private fun service(transport: BlogHttpTransport) = SubscriptionService(
         Mockito.mock(BlogRepository::class.java),
         Mockito.mock(SubscriptionRepository::class.java),
